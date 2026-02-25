@@ -21,7 +21,7 @@ export async function setCart(cartItems: CartItem[]): Promise<void> {
 
 export async function getCart(): Promise<CartItem[]> {
   const response = await fetch('/cart');
-  return await response.json();
+  return response.json();
 }
 
 export async function clearCart(): Promise<void> {

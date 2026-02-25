@@ -1,21 +1,37 @@
 import axios from 'axios';
-import productCard from './productCard';
+import productCard from './productCard.js';
 import type { Product, CartItem } from './types';
 
 declare global {
   interface Window {
-    bootstrap: any;
+    bootstrap: {
+      Modal: new () => { show: () => void; hide: () => void };
+    };
   }
 }
 
 async function fetchProducts(): Promise<Product[]> {
   const response = await fetch('/products');
-  return await response.json();
+  return response.json();
 }
 
 async function fetchCart(): Promise<CartItem[]> {
   const response = await fetch('/cart');
-  return await response.json();
+  return response.json();
+}
+
+async function updateCartCounter(): Promise<void> {
+  try {
+    const cartItems = await fetchCart();
+    const totalCount = cartItems.reduce((sum, item) => sum + item.count, 0);
+
+    const counterElement = document.getElementById('cartCounter');
+    if (counterElement) {
+      counterElement.textContent = totalCount.toString();
+    }
+  } catch (error) {
+    console.error('Error updating cart counter:', error);
+  }
 }
 
 function renderProducts(products: Product[]): void {
@@ -40,18 +56,22 @@ function renderProducts(products: Product[]): void {
     });
   }
 }
-
-async function updateCartCounter(): Promise<void> {
+async function loadCartItems(): Promise<void> {
   try {
     const cartItems = await fetchCart();
-    const totalCount = cartItems.reduce((sum, item) => sum + item.count, 0);
+    const tbody = document.getElementById('cartItemsList');
 
-    const counterElement = document.getElementById('cartCounter');
-    if (counterElement) {
-      counterElement.textContent = totalCount.toString();
+    if (tbody) {
+      tbody.innerHTML = cartItems.map((item) => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.price}</td>
+          <td>${item.count}</td>
+        </tr>
+      `).join('');
     }
   } catch (error) {
-    console.error('Error updating cart counter:', error);
+    console.error('Error loading cart items:', error);
   }
 }
 
@@ -73,25 +93,6 @@ function initModal(): void {
         modal.hide();
       });
     }
-  }
-}
-
-async function loadCartItems(): Promise<void> {
-  try {
-    const cartItems = await fetchCart();
-    const tbody = document.getElementById('cartItemsList');
-
-    if (tbody) {
-      tbody.innerHTML = cartItems.map((item) => `
-        <tr>
-          <td>${item.name}</td>
-          <td>${item.price}</td>
-          <td>${item.count}</td>
-        </tr>
-      `).join('');
-    }
-  } catch (error) {
-    console.error('Error loading cart items:', error);
   }
 }
 
